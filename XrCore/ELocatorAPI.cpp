@@ -6,6 +6,7 @@
 #pragma warning(default : 4995)
 
 #include "FS_internal.h"
+#include <string>
 
 ELocatorAPI* xr_FS = nullptr;
 
@@ -19,91 +20,133 @@ ELocatorAPI::ELocatorAPI()
 	dwOpenCounter = 0;
 }
 
+std::string TrimEnd(std::string& str, char marker, bool saveMarker = false)
+{
+	auto markerPos = str.find_last_of(marker);
+	str.erase(markerPos + (int32_t)saveMarker);
+
+	return str;
+}
+
 void ELocatorAPI::InitFS(u32 flags)
 {
-	const char* FSLTX = "fs.ltx";
+	std::string FSLTX = "fs.ltx";
 
-	char _delimiter = '|'; //','
+	const char DELIMITER_CHAR = '|';
+	const char SLASH_CHAR = '\\';
+
 	if (m_Flags.is(flReady))
+	{
 		return;
+	}
 
 	Log("Initializing File System...");
 	m_Flags.set(flags, TRUE);
-	string_path tmpAppPath;
+
+	IReader* F = nullptr;
+	std::string tmpAppPath = "";
 
 	if (m_Flags.is(flScanAppRoot))
 	{
-		string_path tmpFsPath;
-		xr_strcpy(tmpAppPath, sizeof(tmpAppPath), Core.ApplicationPath);
-		xr_strcpy(tmpFsPath, sizeof(tmpAppPath), tmpAppPath);
-		xr_strcat(tmpFsPath, sizeof(tmpAppPath), FSLTX);
-
-		while (xr_strlen(tmpAppPath) && !exist(tmpFsPath))
+		std::string tmpFsPath;
+		
+		if (strstr(Core.Params, "-use-work-dir"))
 		{
-			// remove last slash if exists
-			if (tmpAppPath[xr_strlen(tmpAppPath) - 1] == '\\')
-				tmpAppPath[xr_strlen(tmpAppPath) - 1] = '\0';
+			string_path buffer {};
+			GetCurrentDirectory(sizeof(buffer) - 1, buffer);
 
-			// go one folder up
-			if (strrchr(tmpAppPath, '\\'))
-				*(strrchr(tmpAppPath, '\\') + 1) = '\0';
-
-			// update path to FSLTX
-			xr_strcpy(tmpFsPath, sizeof(tmpAppPath), tmpAppPath);
-			xr_strcat(tmpFsPath, sizeof(tmpAppPath), FSLTX);
-
-			// remove last slash
-			tmpAppPath[xr_strlen(tmpAppPath) - 1] = '\0';
+			tmpAppPath = buffer;
+			xr_strcpy(Core.ApplicationPath, sizeof(Core.ApplicationPath), buffer);
+		}
+		else
+		{
+			tmpAppPath = Core.ApplicationPath;
 		}
 
-		append_path("$app_root$", tmpAppPath, 0, FALSE);
-		append_path("$fs_root$", tmpAppPath, 0, FALSE);
+		while (!tmpAppPath.empty() && !exist(tmpFsPath.c_str()))
+		{
+			// remove last slash if exists
+			if (tmpAppPath.back() == SLASH_CHAR)
+			{
+				TrimEnd(tmpAppPath, SLASH_CHAR);
+			}
+
+			// go one folder up
+			TrimEnd(tmpAppPath, SLASH_CHAR, true);
+
+			// update path to FSLTX
+			tmpFsPath = tmpAppPath;
+			tmpFsPath += FSLTX;
+
+			// remove last slash
+			TrimEnd(tmpAppPath, SLASH_CHAR);
+		}
+
+		append_path("$app_root$", tmpAppPath.c_str(), 0, FALSE);
+		append_path("$fs_root$", tmpAppPath.c_str(), 0, FALSE);
 	}
 	else
+	{
 		append_path("$fs_root$", "", 0, FALSE);
+	}
 
-	xr_strcat(tmpAppPath, "\\");
-	IReader *F = r_open(FSLTX);
+	F = r_open("$fs_root$", FSLTX.c_str());
+	R_ASSERT3(F, "Can't open file:", FSLTX.c_str());
 
-	if (!F && m_Flags.is(flScanAppRoot))
-		F = r_open("$app_root$", FSLTX);
+	Core.SocSdk = true;
 
-	R_ASSERT3(F, "Can't open file:", FSLTX);
 	// append all pathes
-	string_path buf;
+	string_path buffer;
+
 	string_path id, temp, root, add, def, capt;
 	LPCSTR lp_add, lp_def, lp_capt;
-	string16 b_v;
-	Core.SocSdk = true;
+	string16 b_v;	
 
 	while (!F->eof())
 	{
-		F->r_string(buf, sizeof(buf));
-		_GetItem(buf, 0, id, '=');
+		F->r_string(buffer, sizeof(buffer));
+		_GetItem(buffer, 0, id, '=');
 
 		if (id[0] == ';')
+		{
 			continue;
+		}
 
 		if (!strcmp(id, "$server_data_root$"))
+		{
 			Core.SocSdk = false;
+		}
 
-		_GetItem(buf, 1, temp, '=');
-		int cnt = _GetItemCount(temp, _delimiter);
+		_GetItem(buffer, 1, temp, '=');
+
+		int cnt = _GetItemCount(temp, DELIMITER_CHAR);
 		R_ASSERT(cnt >= 3);
 		u32 fl = 0;
-		_GetItem(temp, 0, b_v, _delimiter);
+		_GetItem(temp, 0, b_v, DELIMITER_CHAR);
+
 		if (CInifile::IsBOOL(b_v))
+		{
 			fl |= FS_Path::flRecurse;
-		_GetItem(temp, 1, b_v, _delimiter);
+		}
+
+		_GetItem(temp, 1, b_v, DELIMITER_CHAR);
+
 		if (CInifile::IsBOOL(b_v))
+		{
 			fl |= FS_Path::flNotif;
-		_GetItem(temp, 2, root, _delimiter);
-		_GetItem(temp, 3, add, _delimiter);
-		_GetItem(temp, 4, def, _delimiter);
-		_GetItem(temp, 5, capt, _delimiter);
+		}
+
+		_GetItem(temp, 2, root, DELIMITER_CHAR);
+		_GetItem(temp, 3, add, DELIMITER_CHAR);
+		_GetItem(temp, 4, def, DELIMITER_CHAR);
+		_GetItem(temp, 5, capt, DELIMITER_CHAR);
 		xr_strlwr(id);
+
 		if (!m_Flags.is(flBuildCopy) && (0 == xr_strcmp(id, "$build_copy$")))
+		{
 			continue;
+		}
+
 		xr_strlwr(root);
 		lp_add = (cnt >= 4) ? xr_strlwr(add) : 0;
 		lp_def = (cnt >= 5) ? def : 0;
@@ -113,11 +156,13 @@ void ELocatorAPI::InitFS(u32 flags)
 		const char* rootDir;
 
 		if (p_it != pathes.end())
+		{
 			rootDir = p_it->second->m_Path;
+		}
 		else
 		{
 			// to find path when working directory is not sdk root, and root not specified
-			rootDir = tmpAppPath;
+			rootDir = tmpAppPath.c_str();
 			lp_add = root;
 		}
 

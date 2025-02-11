@@ -82,14 +82,20 @@ void xrCore::InitCore(const char* AppName, LogCallback cb)
 	xr_strcpy(Params, sizeof(Params), GetCommandLine());
 	_strlwr_s(Params, sizeof(Params));
 
+	// application path
 	string_path fn, dr, di;
 
-	// application path
 	GetModuleFileName(GetModuleHandle(MODULE_NAME), fn, sizeof(fn));
 	_splitpath(fn, dr, di, nullptr, nullptr);
 	strconcat(sizeof(ApplicationPath), ApplicationPath, dr, di);
 
-	GetCurrentDirectory(sizeof(WorkingPath), WorkingPath);
+	// -use-work-dir используетс€, когда при отладке в Working Directory указывают путь к ресурсам игры.
+	// ¬ этом случае, не надо вызывать SetCurrentDirectory.
+	if (strstr(Core.Params, "-use-work-dir") == nullptr)
+	{
+		SetCurrentDirectory(ApplicationPath);
+		GetCurrentDirectory(sizeof(WorkingPath), WorkingPath);
+	}
 
 	// User/Comp Name
 	DWORD sz_user = sizeof(UserName);
