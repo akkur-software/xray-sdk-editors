@@ -204,8 +204,8 @@ namespace ALife
 	DEFINE_VECTOR(CSE_ALifeItemWeapon *, WEAPON_P_VECTOR, WEAPON_P_IT);
 	DEFINE_VECTOR(CSE_ALifeSchedulable *, SCHEDULE_P_VECTOR, SCHEDULE_P_IT);
 
-	DEFINE_MAP(_OBJECT_ID, CSE_ALifeDynamicObject *, D_OBJECT_P_MAP, D_OBJECT_P_PAIR_IT);
-	DEFINE_MAP(_STORY_ID, CSE_ALifeDynamicObject *, STORY_P_MAP, STORY_P_PAIR_IT);
+	typedef xr_map<const _OBJECT_ID, CSE_ALifeDynamicObject*> D_OBJECT_P_MAP; typedef D_OBJECT_P_MAP::iterator D_OBJECT_P_PAIR_IT;;
+	typedef xr_map<const _STORY_ID, CSE_ALifeDynamicObject*> STORY_P_MAP; typedef STORY_P_MAP::iterator STORY_P_PAIR_IT;;
 };
 
 #endif // XRAY_ALIFE_SPACE

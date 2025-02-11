@@ -1,4 +1,5 @@
 #pragma once
+
 #include "LocatorAPI_defs.h"
 
 class XRCORE_API ELocatorAPI
@@ -7,7 +8,7 @@ class XRCORE_API ELocatorAPI
 
 public:
 private:
-	DEFINE_MAP_PRED(LPCSTR, FS_Path *, PathMap, PathPairIt, pred_str);
+	typedef xr_map<const LPCSTR, FS_Path*, pred_str> PathMap; typedef PathMap::iterator PathPairIt;;
 	PathMap pathes;
 
 public:
