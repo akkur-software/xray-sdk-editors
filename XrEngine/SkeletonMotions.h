@@ -157,16 +157,16 @@ public:
 	ICF float Power() { return Dequantize(power); }
 	bool StopAtEnd();
 };
-struct accel_str_pred : public std::binary_function<shared_str, shared_str, bool>
+struct accel_str_pred
 {
 	IC bool operator()(const shared_str &x, const shared_str &y) const { return xr_strcmp(x, y) < 0; }
 };
-typedef xr_map<shared_str, u16, accel_str_pred> accel_map;
+typedef xr_map<const shared_str, u16, accel_str_pred> accel_map;
 DEFINE_VECTOR(CMotionDef, MotionDefVec, MotionDefVecIt);
 
 DEFINE_VECTOR(CMotion, MotionVec, MotionVecIt);
 DEFINE_VECTOR(MotionVec *, BoneMotionsVec, BoneMotionsVecIt);
-DEFINE_MAP(shared_str, MotionVec, BoneMotionMap, BoneMotionMapIt);
+typedef xr_map<const shared_str, MotionVec> BoneMotionMap; typedef BoneMotionMap::iterator BoneMotionMapIt;;
 
 // partition
 class ENGINE_API CPartDef
@@ -228,7 +228,7 @@ struct ENGINE_API motions_value
 
 class ENGINE_API motions_container
 {
-	DEFINE_MAP(shared_str, motions_value *, SharedMotionsMap, SharedMotionsMapIt);
+	typedef xr_map<const shared_str, motions_value*> SharedMotionsMap; typedef SharedMotionsMap::iterator SharedMotionsMapIt;;
 	SharedMotionsMap container;
 
 public:

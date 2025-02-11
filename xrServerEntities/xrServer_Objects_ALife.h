@@ -40,7 +40,7 @@ struct SFillPropData
 	RTokenVec spawn_story_names;
 	RStringVec character_profiles;
 	RStringVec smart_covers;
-	xr_map<shared_str, u32> location_colors;
+	xr_map<const shared_str, u32> location_colors;
 	u32 counter;
 	SFillPropData();
 	~SFillPropData();

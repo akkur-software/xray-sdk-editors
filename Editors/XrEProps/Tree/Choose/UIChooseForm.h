@@ -23,7 +23,7 @@ class XREPROPS_API UIChooseForm : public XrUI
     void CheckFavorite();
 
 protected:
-    DEFINE_MAP(u32, SChooseEvents, EventsMap, EventsMapIt);
+    typedef xr_map<const u32, SChooseEvents> EventsMap; typedef EventsMap::iterator EventsMapIt;;
     static EventsMap m_Events;
 private:
     SChooseEvents E;

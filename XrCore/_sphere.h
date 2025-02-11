@@ -80,34 +80,21 @@ public:
 		}
 		return result;
 	}
-	/*
-				int				quantity;
-				float			afT[2];
-				Fsphere::ERP_Result	result	= sS.intersect(ray.pos,ray.fwd_dir,range,quantity,afT);
 
-				if (Fsphere::rpOriginInside || ((result==Fsphere::rpOriginOutside)&&(afT[0]<range))){
-					if (b_nearest)				{
-						switch(result){
-						case Fsphere::rpOriginInside:	range	= afT[0]<range?afT[0]:range;	break;
-						case Fsphere::rpOriginOutside:	range	= afT[0];						break;
-						}
-						range2			=range*range;
-					}
-	*/
 	ICF ERP_Result intersect_full(const _vector3<T> &start, const _vector3<T> &dir, T &dist) const
 	{
 		int quantity;
 		float afT[2];
-		Fsphere::ERP_Result result = intersect(start, dir, dist, quantity, afT);
+		_sphere<T>::ERP_Result result = intersect(start, dir, dist, quantity, afT);
 
-		if (result == Fsphere::rpOriginInside || ((result == Fsphere::rpOriginOutside) && (afT[0] < dist)))
+		if (result == _sphere<T>::rpOriginInside || ((result == _sphere<T>::rpOriginOutside) && (afT[0] < dist)))
 		{
 			switch (result)
 			{
-			case Fsphere::rpOriginInside:
+			case _sphere<T>::rpOriginInside:
 				dist = afT[0] < dist ? afT[0] : dist;
 				break;
-			case Fsphere::rpOriginOutside:
+			case _sphere<T>::rpOriginOutside:
 				dist = afT[0];
 				break;
 			}
